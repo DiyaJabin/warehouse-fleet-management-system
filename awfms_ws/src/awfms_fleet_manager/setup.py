@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'fleet_manager = awfms_fleet_manager.fleet_manager:main',
+            'robot_node = awfms_fleet_manager.robot_node:main',
         ],
     },
 )
