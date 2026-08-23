@@ -2,14 +2,19 @@
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String 
+from example_interfaces.msg import String 
 
 class FleetManager(Node):
     def __init__(self):
         super().__init__("fleet_manager") 
         self.publisher_ = self.create_publisher(String, "/fleet_manager/status",10)
         self.timer_ = self.create_timer(0.5, self.publish_status)
+        self.subscriber_ = self.create_subscription(String, "/robot/status",self.callback_robot_status, 10)
         self.get_logger().info("Fleet Manager Node has been started")
+
+    def callback_robot_status(self,msg:String):
+        self.get_logger().info(f"Received robot status: {msg.data}")
+
 
     def publish_status(self):
         self.get_logger().info("Publishing message: Fleet manager is availiable")
