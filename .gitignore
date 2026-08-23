@@ -2,9 +2,9 @@
 # ROS 2 / Colcon
 # ==========================================
 
-awfms_ws/build/
-awfms_ws/install/
-awfms_ws/log/
+**/build/
+**/install/
+**/log/
 
 # ROS 2 generated files
 **/__pycache__/
@@ -23,6 +23,7 @@ venv/
 env/
 ENV/
 
+__pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
