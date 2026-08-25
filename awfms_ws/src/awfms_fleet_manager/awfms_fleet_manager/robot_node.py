@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
-from example_interfaces.msg import String
+from awfms_interfaces.msg import RobotStatus
 from awfms_interfaces.srv import RegisterRobot
 
 class Robot(Node):
     def __init__(self):
         super().__init__("robot_1")
-        self.status_publisher_=self.create_publisher(String,"/robot/status",10)
+        self.status_publisher_=self.create_publisher(RobotStatus,"/robot/status",10)
         self.timer_ = self.create_timer(0.5,self.publish_status)
         self.register_client_=self.create_client(RegisterRobot,"/fleet_manager/register_robot")
         self.get_logger().info("Robot Node has been started")
 
     def publish_status(self):
-        self.get_logger().info("Publishing message: Robot 1: IDLE")
-        message=String()
-        message.data="Robot 1: IDLE"
+        self.get_logger().info("Publishing status: robot_1 -> IDLE")
+        message=RobotStatus()
+        message.robot_id="robot_1"
+        message.status="IDLE"
         self.status_publisher_.publish(message)
 
     def register_robot(self,robot_id:str,robot_type:str):
@@ -35,9 +36,6 @@ class Robot(Node):
             self.get_logger().info(f"Registration successfull: {response.message}")
         else:
             self.get_logger().info(f"Registration failed: {response.message}")
-
-
-
 
 def main(args=None):
     rclpy.init(args=args)
