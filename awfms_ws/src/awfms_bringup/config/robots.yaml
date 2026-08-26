@@ -1,0 +1,9 @@
+/robot_1:
+  ros__parameters:
+    robot_id: "robot_1"
+    robot_type: "AGV"
+
+/robot_2:
+  ros__parameters:
+    robot_id: "robot_2"
+    robot_type: "AGV"

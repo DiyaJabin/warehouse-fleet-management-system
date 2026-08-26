@@ -1,0 +1,9 @@
+<launch>
+    <node pkg="awfms_fleet_manager" exec="fleet_manager" name="fleet_manager"/>
+    <node pkg="awfms_fleet_manager" exec="robot_node" name="robot_1">
+        <param from="$(find-pkg-share awfms_bringup)/config/robots.yaml"/>
+    </node>
+    <node pkg="awfms_fleet_manager" exec="robot_node" name="robot_2">
+        <param from="$(find-pkg-share awfms_bringup)/config/robots.yaml"/>
+    </node>
+</launch>

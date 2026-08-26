@@ -41,7 +41,7 @@ class FleetManager(Node):
     
 
     def publish_status(self):
-        self.get_logger().info("Publishing message: Fleet manager is availiable")
+        self.get_logger().info("Publishing message: Fleet manager is available")
         message = String()
         message.data="Fleet manager is available"
         self.status_publisher_.publish(message)
