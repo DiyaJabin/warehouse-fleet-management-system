@@ -3,7 +3,7 @@ import rclpy
 from rclpy.node import Node
 from example_interfaces.msg import String
 from awfms_interfaces.msg import RobotStatus
-from awfms_interfaces.srv import RegisterRobot, CreateTask
+from awfms_interfaces.srv import RegisterRobot, CreateTask, AssignTask
 
 
 class FleetManager(Node):
@@ -15,28 +15,25 @@ class FleetManager(Node):
             String, "/fleet_manager/status", 10
         )
         self.timer_ = self.create_timer(0.5, self.publish_status)
-        self.fleet_timer = self.create_timer(2.0, self.publish_fleet_status)
+        self.fleet_timer_ = self.create_timer(2.0, self.publish_fleet_status)
         self.offline_timer_ = self.create_timer(1.0, self.check_robot_timeouts)
         self.robot_status_subscriber_ = self.create_subscription(
             RobotStatus, "/robot/status", self.callback_robot_status, 10
         )
-        self.register_service = self.create_service(
+        self.register_service_ = self.create_service(
             RegisterRobot, "/fleet_manager/register_robot", self.register_robot_callback
         )
-        self.task_service = self.create_service(
+        self.task_service_ = self.create_service(
             CreateTask, "/fleet_manager/create_task", self.create_task_callback
         )
+        self.task_client_ = self.create_client(AssignTask, "assign_task")
         self.get_logger().info("Fleet Manager Node has been started")
 
     def callback_robot_status(self, msg: RobotStatus):
-        self.get_logger().info(
-            f"Received robot status: Robot ID: {msg.robot_id} | Robot status: {msg.status}"
-        )
         if msg.robot_id in self.robot_registry:
             self.robot_registry[msg.robot_id]["status"] = msg.status
             self.robot_registry[msg.robot_id]["available"] = msg.status == "IDLE"
             self.robot_registry[msg.robot_id]["last_seen"] = self.get_clock().now()
-            self.get_logger().info(f"Updated {msg.robot_id} status to {msg.status}")
         else:
             self.get_logger().warning(
                 f"Received status from unregistered robot: {msg.status}"
@@ -72,8 +69,23 @@ class FleetManager(Node):
 
     def assign_task(self, task_id):
         robot_id = self.find_available_robot()
+
         if robot_id is None:
             return None
+        service_name = f"/{robot_id}/assign_task"
+        task_client = self.create_client(
+            AssignTask, service_name
+        )  # crreate local client for the selected robot's assign_task service
+
+        while not task_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().warn("Waiting for service")
+
+        request = AssignTask.Request()
+
+        request.task_id = task_id
+        request.source = self.task_registry[task_id]["source"]
+        request.destination = self.task_registry[task_id]["destination"]
+
         self.task_registry[task_id]["assigned_robot"] = robot_id
         self.task_registry[task_id]["status"] = "ASSIGNED"
 
