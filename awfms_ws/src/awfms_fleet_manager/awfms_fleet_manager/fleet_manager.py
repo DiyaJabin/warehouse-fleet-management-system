@@ -4,6 +4,7 @@ from rclpy.node import Node
 from example_interfaces.msg import String
 from awfms_interfaces.msg import RobotStatus
 from awfms_interfaces.srv import RegisterRobot, CreateTask, AssignTask
+from functools import partial
 
 
 class FleetManager(Node):
@@ -75,7 +76,7 @@ class FleetManager(Node):
         service_name = f"/{robot_id}/assign_task"
         task_client = self.create_client(
             AssignTask, service_name
-        )  # crreate local client for the selected robot's assign_task service
+        )  # create local client for the selected robot's assign_task service
 
         while not task_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn("Waiting for service")
@@ -86,14 +87,28 @@ class FleetManager(Node):
         request.source = self.task_registry[task_id]["source"]
         request.destination = self.task_registry[task_id]["destination"]
 
-        self.task_registry[task_id]["assigned_robot"] = robot_id
-        self.task_registry[task_id]["status"] = "ASSIGNED"
-
-        self.robot_registry[robot_id]["status"] = "BUSY"
-        self.robot_registry[robot_id]["available"] = False
-
         self.get_logger().info(f"Assigned {task_id} to {robot_id}")
+        future = task_client.call_async(request)
+        future.add_done_callback(
+            partial(self.callback_assign_task, request=request, robot_id=robot_id)
+        )
         return robot_id
+
+    def callback_assign_task(self, future, request, robot_id):
+        response = future.result()
+        if response.success:
+            self.task_registry[request.task_id]["assigned_robot"] = robot_id
+            self.task_registry[request.task_id]["status"] = "ASSIGNED"
+
+            self.robot_registry[request.robot_id]["status"] = "BUSY"
+            self.robot_registry[request.robot_id]["available"] = False
+            self.get_logger().info(
+                f"Task assignment successful! message: {response.message}"
+            )
+        else:
+            self.get_logger().info(
+                f"Task assignment failed. message: {response.message}"
+            )
 
     def create_task_callback(
         self, request: CreateTask.Request, response: CreateTask.Response
