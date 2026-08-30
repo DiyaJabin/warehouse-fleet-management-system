@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import rclpy
+import time
 from rclpy.node import Node
+from rclpy.action import ActionServer
 from awfms_interfaces.msg import RobotStatus
-from awfms_interfaces.srv import RegisterRobot, AssignTask
+from awfms_interfaces.srv import RegisterRobot
+from awfms_interfaces.action import AssignTask
 
 
 class Robot(Node):
@@ -19,10 +22,8 @@ class Robot(Node):
         self.register_client_ = self.create_client(
             RegisterRobot, "/fleet_manager/register_robot"
         )
-        self.task_service = self.create_service(
-            AssignTask,
-            "assign_task",
-            self.assign_task_callback,  # Don't do /assign_task, namespacing won't work
+        self.task_action_server = ActionServer(
+            self, AssignTask, f"assign_task", self.execute_assign_task
         )
         self.get_logger().info("Robot Node has been started")
 
@@ -54,13 +55,28 @@ class Robot(Node):
         else:
             self.get_logger().info(f"Registration failed: {response.message}")
 
-    def assign_task_callback(
-        self, request: AssignTask.Request, response: AssignTask.Response
-    ):
-        self.get_logger().info(f"Received task with task id: {request.task_id}")
-        response.success = True
-        response.message = f"Task {request.task_id} assigned to Robot 1"
-        return response
+    def execute_assign_task(
+        self, goal_handle
+    ):  # goal_handle is the ROS2 handle for currently running action
+        task_id = goal_handle.request.task_id
+        source = goal_handle.request.source
+        destination = goal_handle.request.destination
+
+        self.get_logger().info(f"Received task {task_id}: {source}->{destination}")
+        feedback_msg = AssignTask.Feedback()
+        for progress in range(0, 101, 20):
+            feedback_msg.status = "MOVING"
+            feedback_msg.progress = float(progress)
+
+            goal_handle.publish_feedback(feedback_msg)
+            self.get_logger().info(f"{task_id} progress: {progress}")
+            time.sleep(1)
+
+        goal_handle.succeed()
+        result = AssignTask.Result()
+        result.success = True
+        result.message = f"Task {task_id} completed successfully"
+        return result
 
 
 def main(args=None):

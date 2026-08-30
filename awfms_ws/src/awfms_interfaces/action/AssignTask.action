@@ -1,0 +1,12 @@
+#GOAL
+string task_id
+string source
+string destination
+---
+#RESULT
+bool success
+string message
+---
+#FEEDBACK
+string status
+float32 progress
