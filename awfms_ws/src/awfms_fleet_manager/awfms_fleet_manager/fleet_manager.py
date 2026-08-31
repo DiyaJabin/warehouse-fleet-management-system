@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from rclpy.action import ActionClient
 from example_interfaces.msg import String
 from awfms_interfaces.msg import RobotStatus
-from awfms_interfaces.srv import RegisterRobot, CreateTask, AssignTask
+from awfms_interfaces.srv import RegisterRobot, CreateTask
+from awfms_interfaces.action import AssignTask
 from functools import partial
 
 
@@ -12,6 +14,7 @@ class FleetManager(Node):
         super().__init__("fleet_manager")
         self.robot_registry = {}  # hold all the registered robots
         self.task_registry = {}  # store all created warehouse tasks
+        self.task_clients = {}
         self.status_publisher_ = self.create_publisher(
             String, "/fleet_manager/status", 10
         )
@@ -27,7 +30,6 @@ class FleetManager(Node):
         self.task_service_ = self.create_service(
             CreateTask, "/fleet_manager/create_task", self.create_task_callback
         )
-        self.task_client_ = self.create_client(AssignTask, "assign_task")
         self.get_logger().info("Fleet Manager Node has been started")
 
     def callback_robot_status(self, msg: RobotStatus):
@@ -73,42 +75,86 @@ class FleetManager(Node):
 
         if robot_id is None:
             return None
-        service_name = f"/{robot_id}/assign_task"
-        task_client = self.create_client(
-            AssignTask, service_name
-        )  # create local client for the selected robot's assign_task service
+        action_name = f"/{robot_id}/assign_task"
+        self.task_clients[robot_id] = ActionClient(
+            self, AssignTask, action_name
+        )  # create local client for the selected robot
 
-        while not task_client.wait_for_service(timeout_sec=1.0):
-            self.get_logger().warn("Waiting for service")
+        task_client = self.task_clients[robot_id]
 
-        request = AssignTask.Request()
+        while not task_client.wait_for_server(timeout_sec=1.0):
+            self.get_logger().warn("Waiting for action server")
 
-        request.task_id = task_id
-        request.source = self.task_registry[task_id]["source"]
-        request.destination = self.task_registry[task_id]["destination"]
+        goal = AssignTask.Goal()
+
+        goal.task_id = task_id
+        goal.source = self.task_registry[task_id]["source"]
+        goal.destination = self.task_registry[task_id]["destination"]
 
         self.get_logger().info(f"Assigned {task_id} to {robot_id}")
-        future = task_client.call_async(request)
+        future = task_client.send_goal_async(
+            goal,
+            feedback_callback=partial(
+                self.callback_task_feedback, task_id=task_id, robot_id=robot_id
+            ),
+        )
         future.add_done_callback(
-            partial(self.callback_assign_task, request=request, robot_id=robot_id)
+            partial(self.callback_assign_task, task_id=task_id, robot_id=robot_id)
         )
         return robot_id
 
-    def callback_assign_task(self, future, request, robot_id):
-        response = future.result()
-        if response.success:
-            self.task_registry[request.task_id]["assigned_robot"] = robot_id
-            self.task_registry[request.task_id]["status"] = "ASSIGNED"
+    def callback_assign_task(self, future, task_id, robot_id):
+        goal_handle = future.result()
+        if goal_handle.accepted:
+            self.task_registry[task_id]["assigned_robot"] = robot_id
+            self.task_registry[task_id]["status"] = "ASSIGNED"
 
-            self.robot_registry[request.robot_id]["status"] = "BUSY"
-            self.robot_registry[request.robot_id]["available"] = False
-            self.get_logger().info(
-                f"Task assignment successful! message: {response.message}"
+            self.robot_registry[robot_id]["status"] = "BUSY"
+            self.robot_registry[robot_id]["available"] = False
+            self.get_logger().info(f"Task {task_id} accepted by {robot_id}")
+
+            result_future = goal_handle.get_result_async()
+            result_future.add_done_callback(
+                partial(self.callback_task_result, task_id=task_id, robot_id=robot_id)
             )
         else:
+            self.get_logger().info(f"Task {task_id} was rejected by {robot_id}")
+            return
+
+    def callback_task_feedback(self, feedback_msg, task_id, robot_id):
+        feedback = feedback_msg.feedback
+
+        self.task_registry[task_id]["status"] = feedback.status
+        self.task_registry[task_id]["progress"] = feedback.progress
+
+        self.get_logger().info(
+            f"{task_id} | {robot_id} | " f"{feedback.status} | {feedback.progress}%"
+        )
+
+    def callback_task_result(self, future, task_id, robot_id):
+
+        result = future.result().result
+
+        if result.success:
+
+            self.task_registry[task_id]["status"] = "COMPLETED"
+            self.task_registry[task_id]["progress"] = 100.0
+
+            self.robot_registry[robot_id]["status"] = "IDLE"
+            self.robot_registry[robot_id]["available"] = True
+
             self.get_logger().info(
-                f"Task assignment failed. message: {response.message}"
+                f"Task {task_id} completed successfully by {robot_id}"
             )
+
+        else:
+
+            self.task_registry[task_id]["status"] = "FAILED"
+
+            self.robot_registry[robot_id]["status"] = "IDLE"
+            self.robot_registry[robot_id]["available"] = True
+
+            self.get_logger().info(f"Task {task_id} failed: {result.message}")
 
     def create_task_callback(
         self, request: CreateTask.Request, response: CreateTask.Response
@@ -150,9 +196,9 @@ class FleetManager(Node):
         for robot_id, robot_info in self.robot_registry.items():
             self.get_logger().info(
                 f"{robot_id} | "
-                f"Type: {robot_info["type"]} | "
-                f"Status: {robot_info["status"]} | "
-                f"Available: {robot_info["available"]}\n"
+                f"Type: {robot_info['type']} | "
+                f"Status: {robot_info['status']} | "
+                f"Available: {robot_info['available']}\n"
             )
 
     def check_robot_timeouts(self):
