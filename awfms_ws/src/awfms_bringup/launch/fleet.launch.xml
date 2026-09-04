@@ -14,6 +14,15 @@
         <param name="z" value="0.2"/>
     </node>
 
+    <!-- Spawn robot_2 in Gazebo -->
+    <node pkg="ros_gz_sim" exec="create" name="spawn_robot_2">
+        <param name="name" value="robot_2"/>
+        <param name="file" value="$(find-pkg-share awfms_bringup)/models/robot_2/model.sdf"/>
+        <param name="x" value="2.0"/>
+        <param name="y" value="0.0"/>
+        <param name="z" value="0.2"/>
+    </node>
+
     <!-- Start the Gazebo-ROS 2 bridge -->
     <node pkg="ros_gz_bridge" exec="parameter_bridge" name="gz_bridge">
         <param name="config_file" value="$(find-pkg-share awfms_bringup)/config/bridge.yaml"/>
