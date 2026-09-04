@@ -1,17 +1,35 @@
 <launch>
 
+    <!-- Start Gazebo with the warehouse world -->
+    <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
+        <arg name="gz_args" value="$(find-pkg-share awfms_bringup)/worlds/warehouse.sdf"/>
+    </include>
+
+    <!-- Spawn robot_1 in Gazebo -->
+    <node pkg="ros_gz_sim" exec="create" name="spawn_robot_1">
+        <param name="name" value="robot_1"/>
+        <param name="file" value="$(find-pkg-share awfms_bringup)/models/robot_1/model.sdf"/>
+        <param name="x" value="0.0"/>
+        <param name="y" value="0.0"/>
+        <param name="z" value="0.2"/>
+    </node>
+
+    <!-- Start the Gazebo-ROS 2 bridge -->
+    <node pkg="ros_gz_bridge" exec="parameter_bridge" name="gz_bridge">
+        <param name="config_file" value="$(find-pkg-share awfms_bringup)/config/bridge.yaml"/>
+    </node>
+
+    <!-- Start Fleet Manager -->
     <node pkg="awfms_fleet_manager" exec="fleet_manager" name="fleet_manager"/>
 
+    <!-- Start robot_1 ROS node -->
     <node pkg="awfms_fleet_manager" exec="robot_node" name="robot_1" namespace="/robot_1">
         <param from="$(find-pkg-share awfms_bringup)/config/robots.yaml"/>
     </node>
 
+    <!-- Start robot_2 ROS node -->
     <node pkg="awfms_fleet_manager" exec="robot_node" name="robot_2" namespace="/robot_2">
         <param from="$(find-pkg-share awfms_bringup)/config/robots.yaml"/>
-    </node>
-
-    <node pkg="ros_gz_bridge" exec="parameter_bridge" name="gz_bridge">
-        <param name="config_file" value="$(find-pkg-share awfms_bringup)/config/bridge.yaml"/>
     </node>
 
 </launch>
