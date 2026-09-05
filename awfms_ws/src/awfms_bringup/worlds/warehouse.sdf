@@ -5,6 +5,46 @@
   <world name="warehouse">
 
     <!-- ================================================= -->
+    <!-- GAZEBO SYSTEM PLUGINS                             -->
+    <!-- ================================================= -->
+
+    <!-- Physics system -->
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics">
+    </plugin>
+
+    <!-- Scene broadcaster -->
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster">
+    </plugin>
+
+    <!-- User commands / entity spawning -->
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands">
+    </plugin>
+
+    <!-- Sensors system -->
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
+      <render_engine>ogre2</render_engine>
+    </plugin>
+
+
+    <!-- ================================================= -->
+    <!-- GUI CONFIGURATION                                 -->
+    <!-- ================================================= -->
+
+    <!-- Keep Gazebo's normal GUI plugins -->
+    <gz:policies>
+      <include_gui_default_plugins>true</include_gui_default_plugins>
+    </gz:policies>
+
+    <gui fullscreen="0">
+
+      <!-- LiDAR visualization -->
+      <plugin filename="VisualizeLidar" name="Visualize Lidar">
+      </plugin>
+
+    </gui>
+
+
+    <!-- ================================================= -->
     <!-- PHYSICS                                           -->
     <!-- ================================================= -->
 
@@ -27,7 +67,7 @@
 
 
     <!-- ================================================= -->
-    <!-- GROUND                                             -->
+    <!-- GROUND                                            -->
     <!-- ================================================= -->
 
     <model name="ground">
@@ -46,7 +86,6 @@
         </collision>
 
         <visual name="visual">
-
           <geometry>
             <plane>
               <normal>0 0 1</normal>
@@ -58,7 +97,6 @@
             <ambient>0.7 0.7 0.7 1</ambient>
             <diffuse>0.7 0.7 0.7 1</diffuse>
           </material>
-
         </visual>
 
       </link>
@@ -67,13 +105,12 @@
 
 
     <!-- ================================================= -->
-    <!-- SHELF 1                                            -->
+    <!-- SHELF 1                                           -->
     <!-- ================================================= -->
 
     <model name="shelf_1">
 
       <static>true</static>
-
       <pose>3 2 1 0 0 0</pose>
 
       <link name="link">
@@ -87,7 +124,6 @@
         </collision>
 
         <visual name="visual">
-
           <geometry>
             <box>
               <size>2 0.8 2</size>
@@ -98,7 +134,6 @@
             <ambient>0.5 0.5 0.5 1</ambient>
             <diffuse>0.5 0.5 0.5 1</diffuse>
           </material>
-
         </visual>
 
       </link>
@@ -107,13 +142,12 @@
 
 
     <!-- ================================================= -->
-    <!-- SHELF 2                                            -->
+    <!-- SHELF 2                                           -->
     <!-- ================================================= -->
 
     <model name="shelf_2">
 
       <static>true</static>
-
       <pose>-3 2 1 0 0 0</pose>
 
       <link name="link">
@@ -127,7 +161,6 @@
         </collision>
 
         <visual name="visual">
-
           <geometry>
             <box>
               <size>2 0.8 2</size>
@@ -138,7 +171,6 @@
             <ambient>0.5 0.5 0.5 1</ambient>
             <diffuse>0.5 0.5 0.5 1</diffuse>
           </material>
-
         </visual>
 
       </link>
@@ -147,15 +179,14 @@
 
 
     <!-- ================================================= -->
-    <!-- LIGHT                                               -->
+    <!-- LIGHT                                             -->
     <!-- ================================================= -->
 
-    <light
-      name="sun"
-      type="directional"
-      cast_shadows="true">
+    <light name="sun" type="directional">
 
       <pose>0 0 10 0 0 0</pose>
+
+      <cast_shadows>true</cast_shadows>
 
       <diffuse>1 1 1 1</diffuse>
 

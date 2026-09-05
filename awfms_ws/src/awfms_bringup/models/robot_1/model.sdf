@@ -36,6 +36,33 @@
                     <iyz>0.0</iyz>
                 </inertia>
             </inertial>
+            <!-- 2D LiDAR sensor -->
+            <sensor name="lidar" type="gpu_lidar">
+                <pose>0 0 0.15 0 0 0</pose>
+                <topic>/robot_1/scan</topic>
+                <update_rate>10</update_rate>
+
+                <lidar>
+                    <scan>
+                        <horizontal>
+                            <samples>360</samples>
+                            <resolution>1</resolution>
+                            <min_angle>-3.14159</min_angle>
+                            <max_angle>3.14159</max_angle>
+                        </horizontal>
+                    </scan>
+
+                    <range>
+                        <min>0.12</min>
+                        <max>10.0</max>
+                        <resolution>0.01</resolution>
+                    </range>
+                </lidar>
+
+                <always_on>true</always_on>
+                <visualize>true</visualize>
+            </sensor>
+
 
         </link>
 
