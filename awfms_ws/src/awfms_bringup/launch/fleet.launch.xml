@@ -14,6 +14,9 @@
         <param name="z" value="0.2"/>
     </node>
 
+    <!-- Publish static transform from robot_1 base to LiDAR -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="robot_1_lidar_tf" args="0 0 0.15 0 0 0 robot_1/base_link robot_1/base_link/lidar"/>
+
     <!-- Spawn robot_2 in Gazebo -->
     <node pkg="ros_gz_sim" exec="create" name="spawn_robot_2">
         <param name="name" value="robot_2"/>

@@ -1,0 +1,8 @@
+digraph G {
+"robot_2/odom" -> "robot_2/base_link"[label=" Broadcaster: default_authority\nAverage rate: 50.209\nBuffer length: 4.78\nMost recent transform: 202.5\nOldest transform: 197.72\n"];
+"robot_1/odom" -> "robot_1/base_link"[label=" Broadcaster: default_authority\nAverage rate: 50.21\nBuffer length: 4.76\nMost recent transform: 202.5\nOldest transform: 197.74\n"];
+edge [style=invis];
+ subgraph cluster_legend { style=bold; color=black; label ="view_frames Result";
+"Recorded at time: 1788759604.0790842"[ shape=plaintext ] ;
+}->"robot_1/odom";
+}
