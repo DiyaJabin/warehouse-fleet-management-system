@@ -169,8 +169,7 @@
         </joint>
 
         <!-- Differential drive system -->
-        <plugin filename="gz-sim-diff-drive-system"
-                name="gz::sim::systems::DiffDrive">
+        <plugin filename="gz-sim-diff-drive-system" name="gz::sim::systems::DiffDrive">
             <left_joint>left_wheel_joint</left_joint>
             <right_joint>right_wheel_joint</right_joint>
             <wheel_separation>0.68</wheel_separation>
@@ -178,8 +177,8 @@
             <topic>/robot_2/cmd_vel</topic>
             <odom_topic>/robot_2/odom</odom_topic>
             <tf_topic>/tf</tf_topic>
-            <frame_id>odom</frame_id>
-            <child_frame_id>base_link</child_frame_id>
+            <frame_id>robot_2/odom</frame_id>
+            <child_frame_id>robot_2/base_link</child_frame_id>
         </plugin>
     </model>
 </sdf>

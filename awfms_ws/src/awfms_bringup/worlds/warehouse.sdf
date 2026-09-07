@@ -82,18 +82,19 @@
         </visual>
 
       </link>
-
     </model>
 
 
     <!-- ================================================= -->
-    <!-- SHELF 1                                           -->
+    <!-- SHELVES                                           -->
+    <!-- Two rows of three shelves                         -->
     <!-- ================================================= -->
 
+    <!-- SHELF 1 -->
     <model name="shelf_1">
 
       <static>true</static>
-      <pose>3 2 1 0 0 0</pose>
+      <pose>-4 2 1 0 0 0</pose>
 
       <link name="link">
 
@@ -119,18 +120,14 @@
         </visual>
 
       </link>
-
     </model>
 
 
-    <!-- ================================================= -->
-    <!-- SHELF 2                                           -->
-    <!-- ================================================= -->
-
+    <!-- SHELF 2 -->
     <model name="shelf_2">
 
       <static>true</static>
-      <pose>-3 2 1 0 0 0</pose>
+      <pose>0 2 1 0 0 0</pose>
 
       <link name="link">
 
@@ -156,7 +153,138 @@
         </visual>
 
       </link>
+    </model>
 
+
+    <!-- SHELF 3 -->
+    <model name="shelf_3">
+
+      <static>true</static>
+      <pose>4 2 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+
+      </link>
+    </model>
+
+
+    <!-- SHELF 4 -->
+    <model name="shelf_4">
+
+      <static>true</static>
+      <pose>-4 -2 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+
+      </link>
+    </model>
+
+
+    <!-- SHELF 5 -->
+    <model name="shelf_5">
+
+      <static>true</static>
+      <pose>0 -2 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+
+      </link>
+    </model>
+
+
+    <!-- SHELF 6 -->
+    <model name="shelf_6">
+
+      <static>true</static>
+      <pose>4 -2 1 0 0 0</pose>
+
+      <link name="link">
+
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>2 0.8 2</size>
+            </box>
+          </geometry>
+
+          <material>
+            <ambient>0.5 0.5 0.5 1</ambient>
+            <diffuse>0.5 0.5 0.5 1</diffuse>
+          </material>
+        </visual>
+
+      </link>
     </model>
 
 
