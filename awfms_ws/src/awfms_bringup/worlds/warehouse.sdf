@@ -27,24 +27,6 @@
 
 
     <!-- ================================================= -->
-    <!-- GUI CONFIGURATION                                 -->
-    <!-- ================================================= -->
-
-    <!-- Keep Gazebo's normal GUI plugins -->
-    <gz:policies>
-      <include_gui_default_plugins>true</include_gui_default_plugins>
-    </gz:policies>
-
-    <gui fullscreen="0">
-
-      <!-- LiDAR visualization -->
-      <plugin filename="VisualizeLidar" name="Visualize Lidar">
-      </plugin>
-
-    </gui>
-
-
-    <!-- ================================================= -->
     <!-- PHYSICS                                           -->
     <!-- ================================================= -->
 
