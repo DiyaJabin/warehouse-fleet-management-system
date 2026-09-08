@@ -30,6 +30,14 @@
     <node pkg="ros_gz_bridge" exec="parameter_bridge" name="gz_bridge">
         <param name="config_file" value="$(find-pkg-share awfms_bringup)/config/bridge.yaml"/>
     </node>
+    <!-- Start SLAM Toolbox for robot_1 -->
+    <node pkg="slam_toolbox" exec="async_slam_toolbox_node" name="slam_toolbox" output="screen">
+
+        <param from="$(find-pkg-share awfms_bringup)/config/slam_toolbox.yaml"/>
+
+        <param name="use_sim_time" value="true"/>
+
+    </node>
 
     <!-- Start Fleet Manager -->
     <node pkg="awfms_fleet_manager" exec="fleet_manager" name="fleet_manager"/>
