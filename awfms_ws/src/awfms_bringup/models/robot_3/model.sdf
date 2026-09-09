@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <sdf version="1.10">
-    <model name="robot_2">
+    <model name="robot_3">
         <static>false</static>
         <!-- Main robot chassis -->
         <link name="base_link">
@@ -32,7 +32,7 @@
             <!-- 2D LiDAR sensor -->
             <sensor name="lidar" type="gpu_lidar">
                 <pose>0 0 0.15 0 0 0</pose>
-                <topic>/robot_2/scan</topic>
+                <topic>/robot_3/scan</topic>
                 <update_rate>10</update_rate>
                 <lidar>
                     <scan>
@@ -177,11 +177,11 @@
             <right_joint>right_wheel_joint</right_joint>
             <wheel_separation>0.68</wheel_separation>
             <wheel_radius>0.15</wheel_radius>
-            <topic>/robot_2/cmd_vel</topic>
-            <odom_topic>/robot_2/odom</odom_topic>
+            <topic>/robot_3/cmd_vel</topic>
+            <odom_topic>/robot_3/odom</odom_topic>
             <tf_topic>/tf</tf_topic>
-            <frame_id>robot_2/odom</frame_id>
-            <child_frame_id>robot_2/base_link</child_frame_id>
+            <frame_id>robot_3/odom</frame_id>
+            <child_frame_id>robot_3/base_link</child_frame_id>
         </plugin>
     </model>
 </sdf>

@@ -26,6 +26,32 @@
         <param name="z" value="0.2"/>
     </node>
 
+    <!-- Static transform for robot_2 LiDAR -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="robot_2_lidar_tf" args="0 0 0.15 0 0 0 robot_2/base_link robot_2/base_link/lidar"/>
+
+    <!-- Spawn robot_3 in Gazebo -->
+    <node pkg="ros_gz_sim" exec="create" name="spawn_robot_3">
+        <param name="name" value="robot_3"/>
+        <param name="file" value="$(find-pkg-share awfms_bringup)/models/robot_3/model.sdf"/>
+        <param name="x" value="-2.0"/>
+        <param name="y" value="0.0"/>
+        <param name="z" value="0.2"/>
+    </node>
+
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="robot_3_lidar_tf" args="0 0 0.15 0 0 0 robot_3/base_link robot_3/base_link/lidar"/>
+
+
+    <!-- Spawn robot_4 in Gazebo -->
+    <node pkg="ros_gz_sim" exec="create" name="spawn_robot_4">
+        <param name="name" value="robot_4"/>
+        <param name="file" value="$(find-pkg-share awfms_bringup)/models/robot_4/model.sdf"/>
+        <param name="x" value="4.0"/>
+        <param name="y" value="0.0"/>
+        <param name="z" value="0.2"/>
+    </node>
+
+    <!-- Static transform for robot_4 LiDAR -->
+    <node pkg="tf2_ros" exec="static_transform_publisher" name="robot_4_lidar_tf" args="0 0 0.15 0 0 0 robot_4/base_link robot_4/base_link/lidar"/>
     <!-- Start the Gazebo-ROS 2 bridge -->
     <node pkg="ros_gz_bridge" exec="parameter_bridge" name="gz_bridge">
         <param name="config_file" value="$(find-pkg-share awfms_bringup)/config/bridge.yaml"/>
@@ -49,6 +75,14 @@
 
     <!-- Start robot_2 ROS node -->
     <node pkg="awfms_fleet_manager" exec="robot_node" name="robot_2" namespace="/robot_2">
+        <param from="$(find-pkg-share awfms_bringup)/config/robots.yaml"/>
+    </node>
+    <!-- Start robot_3 ROS node -->
+    <node pkg="awfms_fleet_manager" exec="robot_node" name="robot_3" namespace="/robot_3">
+        <param from="$(find-pkg-share awfms_bringup)/config/robots.yaml"/>
+    </node>
+    <!-- Start robot_4 ROS node -->
+    <node pkg="awfms_fleet_manager" exec="robot_node" name="robot_4" namespace="/robot_4">
         <param from="$(find-pkg-share awfms_bringup)/config/robots.yaml"/>
     </node>
 
