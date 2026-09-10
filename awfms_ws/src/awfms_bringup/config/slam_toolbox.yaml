@@ -6,6 +6,7 @@ slam_toolbox:
     base_frame: robot_1/base_link
     scan_topic: /robot_1/scan
 
+    use_sim_time: true
     use_map_saver: true
     mode: mapping
 

@@ -1,0 +1,12 @@
+<launch>
+    <!-- Start SLAM Toolbox -->
+    <node pkg="slam_toolbox" exec="async_slam_toolbox_node" name="slam_toolbox" output="screen">
+        <param from="$(find-pkg-share awfms_bringup)/config/slam_toolbox.yaml"/>
+    </node>
+    <!-- Automatically configure and activate SLAM Toolbox -->
+    <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_slam" output="screen">
+        <param name="use_sim_time" value="true"/>
+        <param name="autostart" value="true"/>
+        <param name="node_names" value="['slam_toolbox']"/>
+    </node>
+</launch>
