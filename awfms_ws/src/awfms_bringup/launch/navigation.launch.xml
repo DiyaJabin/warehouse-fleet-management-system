@@ -1,0 +1,156 @@
+<launch>
+    <arg name="map" default="$(find-pkg-share awfms_bringup)/maps/warehouse_map.yaml"/>
+    <arg name="params_file" default="$(find-pkg-share awfms_bringup)/config/nav2_params.yaml"/>
+
+    <node pkg="nav2_map_server" exec="map_server" name="map_server" output="screen">
+        <param from="$(var params_file)"/>
+        <param name="yaml_filename" value="$(var map)"/>
+        <param name="use_sim_time" value="true"/>
+    </node>
+
+    <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_map" output="screen">
+        <param name="use_sim_time" value="true"/>
+        <param name="autostart" value="true"/>
+        <param name="node_names" value="['map_server']"/>
+    </node>
+
+    <group>
+        <push-ros-namespace namespace="robot_1"/>
+
+        <node pkg="nav2_amcl" exec="amcl" name="amcl" output="screen">
+            <param from="$(var params_file)"/>
+            <remap from="map" to="/map"/>
+        </node>
+
+        <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_behaviors" exec="behavior_server" name="behavior_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_bt_navigator" exec="bt_navigator" name="bt_navigator" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_waypoint_follower" exec="waypoint_follower" name="waypoint_follower" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_navigation" output="screen">
+            <param name="use_sim_time" value="true"/>
+            <param name="autostart" value="true"/>
+            <param name="node_names" value="['amcl','planner_server','controller_server','behavior_server','bt_navigator','waypoint_follower']"/>
+        </node>
+    </group>
+
+    <group>
+        <push-ros-namespace namespace="robot_2"/>
+
+        <node pkg="nav2_amcl" exec="amcl" name="amcl" output="screen">
+            <param from="$(var params_file)"/>
+            <remap from="map" to="/map"/>
+        </node>
+
+        <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_behaviors" exec="behavior_server" name="behavior_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_bt_navigator" exec="bt_navigator" name="bt_navigator" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_waypoint_follower" exec="waypoint_follower" name="waypoint_follower" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_navigation" output="screen">
+            <param name="use_sim_time" value="true"/>
+            <param name="autostart" value="true"/>
+            <param name="node_names" value="['amcl','planner_server','controller_server','behavior_server','bt_navigator','waypoint_follower']"/>
+        </node>
+    </group>
+
+    <group>
+        <push-ros-namespace namespace="robot_3"/>
+
+        <node pkg="nav2_amcl" exec="amcl" name="amcl" output="screen">
+            <param from="$(var params_file)"/>
+            <remap from="map" to="/map"/>
+        </node>
+
+        <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_behaviors" exec="behavior_server" name="behavior_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_bt_navigator" exec="bt_navigator" name="bt_navigator" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_waypoint_follower" exec="waypoint_follower" name="waypoint_follower" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_navigation" output="screen">
+            <param name="use_sim_time" value="true"/>
+            <param name="autostart" value="true"/>
+            <param name="node_names" value="['amcl','planner_server','controller_server','behavior_server','bt_navigator','waypoint_follower']"/>
+        </node>
+    </group>
+
+    <group>
+        <push-ros-namespace namespace="robot_4"/>
+
+        <node pkg="nav2_amcl" exec="amcl" name="amcl" output="screen">
+            <param from="$(var params_file)"/>
+            <remap from="map" to="/map"/>
+        </node>
+
+        <node pkg="nav2_planner" exec="planner_server" name="planner_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_controller" exec="controller_server" name="controller_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_behaviors" exec="behavior_server" name="behavior_server" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_bt_navigator" exec="bt_navigator" name="bt_navigator" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_waypoint_follower" exec="waypoint_follower" name="waypoint_follower" output="screen">
+            <param from="$(var params_file)"/>
+        </node>
+
+        <node pkg="nav2_lifecycle_manager" exec="lifecycle_manager" name="lifecycle_manager_navigation" output="screen">
+            <param name="use_sim_time" value="true"/>
+            <param name="autostart" value="true"/>
+            <param name="node_names" value="['amcl','planner_server','controller_server','behavior_server','bt_navigator','waypoint_follower']"/>
+        </node>
+    </group>
+</launch>

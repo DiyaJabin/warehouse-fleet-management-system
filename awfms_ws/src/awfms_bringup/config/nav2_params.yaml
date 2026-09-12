@@ -1,0 +1,692 @@
+/map_server:
+  ros__parameters:
+    use_sim_time: true
+    yaml_filename: ""
+
+/robot_1/amcl:
+  ros__parameters:
+    use_sim_time: true
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: robot_1/base_link
+    odom_frame_id: robot_1/odom
+    global_frame_id: map
+    scan_topic: /robot_1/scan
+    laser_model_type: likelihood_field
+    max_particles: 2000
+    min_particles: 500
+    update_min_d: 0.2
+    update_min_a: 0.2
+    transform_tolerance: 1.0
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+/robot_2/amcl:
+  ros__parameters:
+    use_sim_time: true
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: robot_2/base_link
+    odom_frame_id: robot_2/odom
+    global_frame_id: map
+    scan_topic: /robot_2/scan
+    laser_model_type: likelihood_field
+    max_particles: 2000
+    min_particles: 500
+    update_min_d: 0.2
+    update_min_a: 0.2
+    transform_tolerance: 1.0
+    set_initial_pose: true
+    initial_pose:
+      x: 2.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+/robot_3/amcl:
+  ros__parameters:
+    use_sim_time: true
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: robot_3/base_link
+    odom_frame_id: robot_3/odom
+    global_frame_id: map
+    scan_topic: /robot_3/scan
+    laser_model_type: likelihood_field
+    max_particles: 2000
+    min_particles: 500
+    update_min_d: 0.2
+    update_min_a: 0.2
+    transform_tolerance: 1.0
+    set_initial_pose: true
+    initial_pose:
+      x: -2.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+/robot_4/amcl:
+  ros__parameters:
+    use_sim_time: true
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    alpha5: 0.2
+    base_frame_id: robot_4/base_link
+    odom_frame_id: robot_4/odom
+    global_frame_id: map
+    scan_topic: /robot_4/scan
+    laser_model_type: likelihood_field
+    max_particles: 2000
+    min_particles: 500
+    update_min_d: 0.2
+    update_min_a: 0.2
+    transform_tolerance: 1.0
+    set_initial_pose: true
+    initial_pose:
+      x: 4.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+/robot_1/planner_server:
+  ros__parameters:
+    use_sim_time: true
+    expected_planner_frequency: 10.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+
+/robot_2/planner_server:
+  ros__parameters:
+    use_sim_time: true
+    expected_planner_frequency: 10.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+
+/robot_3/planner_server:
+  ros__parameters:
+    use_sim_time: true
+    expected_planner_frequency: 10.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+
+/robot_4/planner_server:
+  ros__parameters:
+    use_sim_time: true
+    expected_planner_frequency: 10.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner::NavfnPlanner"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+
+/robot_1/controller_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 10.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.2
+      movement_time_allowance: 10.0
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      stateful: true
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      min_vel_x: 0.0
+      max_vel_x: 0.5
+      max_vel_theta: 1.0
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_theta: 2.0
+      decel_lim_x: -1.0
+      decel_lim_theta: -2.0
+      vx_samples: 20
+      vtheta_samples: 20
+      sim_time: 1.7
+      xy_goal_tolerance: 0.25
+      trans_stopped_velocity: 0.1
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+      critics:
+        [
+          "RotateToGoal",
+          "Oscillation",
+          "BaseObstacle",
+          "GoalAlign",
+          "PathAlign",
+          "PathDist",
+          "GoalDist",
+        ]
+
+/robot_2/controller_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 10.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.2
+      movement_time_allowance: 10.0
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      stateful: true
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      min_vel_x: 0.0
+      max_vel_x: 0.5
+      max_vel_theta: 1.0
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_theta: 2.0
+      decel_lim_x: -1.0
+      decel_lim_theta: -2.0
+      vx_samples: 20
+      vtheta_samples: 20
+      sim_time: 1.7
+      xy_goal_tolerance: 0.25
+      trans_stopped_velocity: 0.1
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+      critics:
+        [
+          "RotateToGoal",
+          "Oscillation",
+          "BaseObstacle",
+          "GoalAlign",
+          "PathAlign",
+          "PathDist",
+          "GoalDist",
+        ]
+
+/robot_3/controller_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 10.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.2
+      movement_time_allowance: 10.0
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      stateful: true
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      min_vel_x: 0.0
+      max_vel_x: 0.5
+      max_vel_theta: 1.0
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_theta: 2.0
+      decel_lim_x: -1.0
+      decel_lim_theta: -2.0
+      vx_samples: 20
+      vtheta_samples: 20
+      sim_time: 1.7
+      xy_goal_tolerance: 0.25
+      trans_stopped_velocity: 0.1
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+      critics:
+        [
+          "RotateToGoal",
+          "Oscillation",
+          "BaseObstacle",
+          "GoalAlign",
+          "PathAlign",
+          "PathDist",
+          "GoalDist",
+        ]
+
+/robot_4/controller_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 10.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["goal_checker"]
+    controller_plugins: ["FollowPath"]
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.2
+      movement_time_allowance: 10.0
+    goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      stateful: true
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.25
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      min_vel_x: 0.0
+      max_vel_x: 0.5
+      max_vel_theta: 1.0
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+      acc_lim_x: 1.0
+      acc_lim_theta: 2.0
+      decel_lim_x: -1.0
+      decel_lim_theta: -2.0
+      vx_samples: 20
+      vtheta_samples: 20
+      sim_time: 1.7
+      xy_goal_tolerance: 0.25
+      trans_stopped_velocity: 0.1
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+      critics:
+        [
+          "RotateToGoal",
+          "Oscillation",
+          "BaseObstacle",
+          "GoalAlign",
+          "PathAlign",
+          "PathDist",
+          "GoalDist",
+        ]
+
+/robot_1/local_costmap/local_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 5.0
+    publish_frequency: 2.0
+    global_frame: robot_1/odom
+    robot_base_frame: robot_1/base_link
+    rolling_window: true
+    width: 5
+    height: 5
+    resolution: 0.05
+    robot_radius: 0.45
+    plugins: ["obstacle_layer", "inflation_layer"]
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_1/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_2/local_costmap/local_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 5.0
+    publish_frequency: 2.0
+    global_frame: robot_2/odom
+    robot_base_frame: robot_2/base_link
+    rolling_window: true
+    width: 5
+    height: 5
+    resolution: 0.05
+    robot_radius: 0.45
+    plugins: ["obstacle_layer", "inflation_layer"]
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_2/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_3/local_costmap/local_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 5.0
+    publish_frequency: 2.0
+    global_frame: robot_3/odom
+    robot_base_frame: robot_3/base_link
+    rolling_window: true
+    width: 5
+    height: 5
+    resolution: 0.05
+    robot_radius: 0.45
+    plugins: ["obstacle_layer", "inflation_layer"]
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_3/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_4/local_costmap/local_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 5.0
+    publish_frequency: 2.0
+    global_frame: robot_4/odom
+    robot_base_frame: robot_4/base_link
+    rolling_window: true
+    width: 5
+    height: 5
+    resolution: 0.05
+    robot_radius: 0.45
+    plugins: ["obstacle_layer", "inflation_layer"]
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_4/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_1/global_costmap/global_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 2.0
+    publish_frequency: 1.0
+    global_frame: map
+    robot_base_frame: robot_1/base_link
+    robot_radius: 0.45
+    resolution: 0.05
+    track_unknown_space: true
+    plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+    static_layer:
+      plugin: "nav2_costmap_2d::StaticLayer"
+      map_subscribe_transient_local: true
+      map_topic: /map
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_1/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_2/global_costmap/global_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 2.0
+    publish_frequency: 1.0
+    global_frame: map
+    robot_base_frame: robot_2/base_link
+    robot_radius: 0.45
+    resolution: 0.05
+    track_unknown_space: true
+    plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+    static_layer:
+      plugin: "nav2_costmap_2d::StaticLayer"
+      map_subscribe_transient_local: true
+      map_topic: /map
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_2/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_3/global_costmap/global_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 2.0
+    publish_frequency: 1.0
+    global_frame: map
+    robot_base_frame: robot_3/base_link
+    robot_radius: 0.45
+    resolution: 0.05
+    track_unknown_space: true
+    plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+    static_layer:
+      plugin: "nav2_costmap_2d::StaticLayer"
+      map_subscribe_transient_local: true
+      map_topic: /map
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_3/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_4/global_costmap/global_costmap:
+  ros__parameters:
+    use_sim_time: true
+    update_frequency: 2.0
+    publish_frequency: 1.0
+    global_frame: map
+    robot_base_frame: robot_4/base_link
+    robot_radius: 0.45
+    resolution: 0.05
+    track_unknown_space: true
+    plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+    static_layer:
+      plugin: "nav2_costmap_2d::StaticLayer"
+      map_subscribe_transient_local: true
+      map_topic: /map
+    obstacle_layer:
+      plugin: "nav2_costmap_2d::ObstacleLayer"
+      enabled: true
+      observation_sources: scan
+      scan:
+        topic: /robot_4/scan
+        max_obstacle_height: 2.0
+        clearing: true
+        marking: true
+        data_type: "LaserScan"
+    inflation_layer:
+      plugin: "nav2_costmap_2d::InflationLayer"
+      cost_scaling_factor: 3.0
+      inflation_radius: 0.55
+
+/robot_1/behavior_server:
+  ros__parameters:
+    use_sim_time: true
+    cycle_frequency: 10.0
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors::DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+
+/robot_2/behavior_server:
+  ros__parameters:
+    use_sim_time: true
+    cycle_frequency: 10.0
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors::DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+
+/robot_3/behavior_server:
+  ros__parameters:
+    use_sim_time: true
+    cycle_frequency: 10.0
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors::DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+
+/robot_4/behavior_server:
+  ros__parameters:
+    use_sim_time: true
+    cycle_frequency: 10.0
+    behavior_plugins: ["spin", "backup", "drive_on_heading", "wait"]
+    spin:
+      plugin: "nav2_behaviors::Spin"
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors::DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+
+/robot_1/bt_navigator:
+  ros__parameters:
+    use_sim_time: true
+    global_frame: map
+    robot_base_frame: robot_1/base_link
+    odom_topic: /robot_1/odom
+    default_nav_to_pose_bt_xml: /opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml
+
+/robot_2/bt_navigator:
+  ros__parameters:
+    use_sim_time: true
+    global_frame: map
+    robot_base_frame: robot_2/base_link
+    odom_topic: /robot_2/odom
+    default_nav_to_pose_bt_xml: /opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml
+
+/robot_3/bt_navigator:
+  ros__parameters:
+    use_sim_time: true
+    global_frame: map
+    robot_base_frame: robot_3/base_link
+    odom_topic: /robot_3/odom
+    default_nav_to_pose_bt_xml: /opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml
+
+/robot_4/bt_navigator:
+  ros__parameters:
+    use_sim_time: true
+    global_frame: map
+    robot_base_frame: robot_4/base_link
+    odom_topic: /robot_4/odom
+    default_nav_to_pose_bt_xml: /opt/ros/jazzy/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml
+
+/robot_1/waypoint_follower:
+  ros__parameters:
+    use_sim_time: true
+    loop_rate: 20
+    stop_on_failure: false
+    waypoint_task_executor_bt_xml: /opt/ros/jazzy/share/nav2_waypoint_follower/behavior_trees/wait_at_waypoint.xml
+
+/robot_2/waypoint_follower:
+  ros__parameters:
+    use_sim_time: true
+    loop_rate: 20
+    stop_on_failure: false
+    waypoint_task_executor_bt_xml: /opt/ros/jazzy/share/nav2_waypoint_follower/behavior_trees/wait_at_waypoint.xml
+
+/robot_3/waypoint_follower:
+  ros__parameters:
+    use_sim_time: true
+    loop_rate: 20
+    stop_on_failure: false
+    waypoint_task_executor_bt_xml: /opt/ros/jazzy/share/nav2_waypoint_follower/behavior_trees/wait_at_waypoint.xml
+
+/robot_4/waypoint_follower:
+  ros__parameters:
+    use_sim_time: true
+    loop_rate: 20
+    stop_on_failure: false
+    waypoint_task_executor_bt_xml: /opt/ros/jazzy/share/nav2_waypoint_follower/behavior_trees/wait_at_waypoint.xml
