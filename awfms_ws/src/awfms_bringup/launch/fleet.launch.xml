@@ -1,8 +1,11 @@
 <launch>
 
     <!-- Start Gazebo with the warehouse world -->
+    <!-- "-r" runs the simulation immediately instead of leaving it paused; a paused sim
+         means /clock never ticks, so no sensor/odom data flows and downstream nav2
+         lifecycle nodes (e.g. map_server) can time out waiting on it during bringup -->
     <include file="$(find-pkg-share ros_gz_sim)/launch/gz_sim.launch.py">
-        <arg name="gz_args" value="$(find-pkg-share awfms_bringup)/worlds/warehouse.sdf"/>
+        <arg name="gz_args" value="-r $(find-pkg-share awfms_bringup)/worlds/warehouse.sdf"/>
     </include>
 
     <!-- Spawn robot_1 in Gazebo -->
