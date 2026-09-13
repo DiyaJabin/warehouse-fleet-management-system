@@ -12,6 +12,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/RegisterRobot.srv"
   "srv/CreateTask.srv"
+  "srv/ReserveZone.srv"
+  "srv/ReleaseZone.srv"
   "msg/RobotStatus.msg"
   "msg/Task.msg"
   "action/AssignTask.action"

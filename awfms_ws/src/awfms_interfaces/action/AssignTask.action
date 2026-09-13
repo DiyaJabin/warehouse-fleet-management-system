@@ -2,6 +2,8 @@
 string task_id
 string source
 string destination
+float64 dest_x
+float64 dest_y
 ---
 #RESULT
 bool success

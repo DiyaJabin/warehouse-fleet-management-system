@@ -4,9 +4,38 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 from example_interfaces.msg import String
 from awfms_interfaces.msg import RobotStatus
-from awfms_interfaces.srv import RegisterRobot, CreateTask
+from awfms_interfaces.srv import RegisterRobot, CreateTask, ReserveZone, ReleaseZone
 from awfms_interfaces.action import AssignTask
 from functools import partial
+
+# Named locations in the warehouse (map frame), matching the pickup_zone/
+# dropoff_zone markers placed in warehouse.sdf.
+LOCATIONS = {
+    "pickup": (-8.3, 0.0),
+    "dropoff": (8.3, 0.0),
+}
+
+# Shared lane segments a route may need to cross, positioned over the
+# central aisle between the two shelf rows (y=3.0 / y=-3.0) where every
+# robot's path currently overlaps. (zone_id, x, y, radius)
+ZONES = [
+    ("corridor_west", -5.0, 0.0, 2.0),
+    ("corridor_center", 0.0, 0.0, 2.5),
+    ("corridor_east", 5.0, 0.0, 2.0),
+]
+
+ASSIGN_RETRY = "RETRY"
+ASSIGN_INVALID = "INVALID"
+
+
+def _dist_point_to_segment(px, py, ax, ay, bx, by):
+    dx, dy = bx - ax, by - ay
+    length_sq = dx * dx + dy * dy
+    if length_sq == 0.0:
+        return ((px - ax) ** 2 + (py - ay) ** 2) ** 0.5
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / length_sq))
+    cx, cy = ax + t * dx, ay + t * dy
+    return ((px - cx) ** 2 + (py - cy) ** 2) ** 0.5
 
 
 class FleetManager(Node):
@@ -15,12 +44,15 @@ class FleetManager(Node):
         self.robot_registry = {}  # hold all the registered robots
         self.task_registry = {}  # store all created warehouse tasks
         self.task_clients = {}
+        self.pending_tasks = []  # task_ids waiting for a robot or a free lane
+        self.zone_locks = {zone_id: None for zone_id, _, _, _ in ZONES}
         self.status_publisher_ = self.create_publisher(
             String, "/fleet_manager/status", 10
         )
         self.timer_ = self.create_timer(0.5, self.publish_status)
         self.fleet_timer_ = self.create_timer(2.0, self.publish_fleet_status)
         self.offline_timer_ = self.create_timer(1.0, self.check_robot_timeouts)
+        self.pending_timer_ = self.create_timer(1.0, self.process_pending_tasks)
         self.robot_status_subscriber_ = self.create_subscription(
             RobotStatus, "/robot/status", self.callback_robot_status, 10
         )
@@ -29,6 +61,12 @@ class FleetManager(Node):
         )
         self.task_service_ = self.create_service(
             CreateTask, "/fleet_manager/create_task", self.create_task_callback
+        )
+        self.reserve_zone_service_ = self.create_service(
+            ReserveZone, "/fleet_manager/reserve_zone", self.reserve_zone_callback
+        )
+        self.release_zone_service_ = self.create_service(
+            ReleaseZone, "/fleet_manager/release_zone", self.release_zone_callback
         )
         self.get_logger().info("Fleet Manager Node has been started")
 
@@ -70,11 +108,95 @@ class FleetManager(Node):
                 return robot_id
         return None
 
-    def assign_task(self, task_id):
-        robot_id = self.find_available_robot()
+    def zones_for_route(self, start, end):
+        if start is None:
+            return [zone_id for zone_id, _, _, _ in ZONES]
+        ax, ay = start
+        bx, by = end
+        needed = []
+        for zone_id, zx, zy, zr in ZONES:
+            if _dist_point_to_segment(zx, zy, ax, ay, bx, by) <= zr:
+                needed.append(zone_id)
+        return needed
 
+    def _try_reserve(self, robot_id, zone_id):
+        holder = self.zone_locks.get(zone_id)
+        if holder is None or holder == robot_id:
+            self.zone_locks[zone_id] = robot_id
+            return True
+        return False
+
+    def try_reserve_zones(self, robot_id, zone_ids):
+        reserved = []
+        for zone_id in zone_ids:
+            if self._try_reserve(robot_id, zone_id):
+                reserved.append(zone_id)
+            else:
+                for zid in reserved:
+                    self.zone_locks[zid] = None
+                return False
+        return True
+
+    def release_zones(self, robot_id, zone_ids):
+        for zone_id in zone_ids:
+            if self.zone_locks.get(zone_id) == robot_id:
+                self.zone_locks[zone_id] = None
+
+    def reserve_zone_callback(
+        self, request: ReserveZone.Request, response: ReserveZone.Response
+    ):
+        if request.zone_id not in self.zone_locks:
+            response.granted = False
+            response.message = f"Unknown zone: {request.zone_id}"
+            return response
+        response.granted = self._try_reserve(request.robot_id, request.zone_id)
+        if response.granted:
+            response.message = f"{request.zone_id} granted to {request.robot_id}"
+        else:
+            response.message = (
+                f"{request.zone_id} held by {self.zone_locks[request.zone_id]}"
+            )
+        return response
+
+    def release_zone_callback(
+        self, request: ReleaseZone.Request, response: ReleaseZone.Response
+    ):
+        if request.zone_id not in self.zone_locks:
+            response.success = False
+            response.message = f"Unknown zone: {request.zone_id}"
+            return response
+        self.release_zones(request.robot_id, [request.zone_id])
+        response.success = True
+        response.message = f"{request.zone_id} released by {request.robot_id}"
+        return response
+
+    def try_assign(self, task_id):
+        task = self.task_registry[task_id]
+        if task["destination"] not in LOCATIONS:
+            self.get_logger().warn(
+                f"{task_id}: unknown destination '{task['destination']}'"
+            )
+            return ASSIGN_INVALID
+
+        robot_id = self.find_available_robot()
         if robot_id is None:
-            return None
+            return ASSIGN_RETRY
+
+        start = LOCATIONS.get(task["source"])
+        dest = LOCATIONS[task["destination"]]
+        zone_ids = self.zones_for_route(start, dest)
+        if not self.try_reserve_zones(robot_id, zone_ids):
+            return ASSIGN_RETRY
+
+        task["zones"] = zone_ids
+        task["assigned_robot"] = robot_id
+        task["status"] = "ASSIGNED"
+        self.robot_registry[robot_id]["status"] = "BUSY"
+        self.robot_registry[robot_id]["available"] = False
+        self.dispatch_task(task_id, robot_id, dest)
+        return robot_id
+
+    def dispatch_task(self, task_id, robot_id, dest):
         action_name = f"/{robot_id}/assign_task"
         self.task_clients[robot_id] = ActionClient(
             self, AssignTask, action_name
@@ -86,10 +208,11 @@ class FleetManager(Node):
             self.get_logger().warn("Waiting for action server")
 
         goal = AssignTask.Goal()
-
         goal.task_id = task_id
         goal.source = self.task_registry[task_id]["source"]
         goal.destination = self.task_registry[task_id]["destination"]
+        goal.dest_x = dest[0]
+        goal.dest_y = dest[1]
 
         self.get_logger().info(f"Assigned {task_id} to {robot_id}")
         future = task_client.send_goal_async(
@@ -101,16 +224,10 @@ class FleetManager(Node):
         future.add_done_callback(
             partial(self.callback_assign_task, task_id=task_id, robot_id=robot_id)
         )
-        return robot_id
 
     def callback_assign_task(self, future, task_id, robot_id):
         goal_handle = future.result()
         if goal_handle.accepted:
-            self.task_registry[task_id]["assigned_robot"] = robot_id
-            self.task_registry[task_id]["status"] = "ASSIGNED"
-
-            self.robot_registry[robot_id]["status"] = "BUSY"
-            self.robot_registry[robot_id]["available"] = False
             self.get_logger().info(f"Task {task_id} accepted by {robot_id}")
 
             result_future = goal_handle.get_result_async()
@@ -119,7 +236,10 @@ class FleetManager(Node):
             )
         else:
             self.get_logger().info(f"Task {task_id} was rejected by {robot_id}")
-            return
+            self.release_zones(robot_id, self.task_registry[task_id].get("zones", []))
+            self.task_registry[task_id]["status"] = "FAILED"
+            self.robot_registry[robot_id]["status"] = "IDLE"
+            self.robot_registry[robot_id]["available"] = True
 
     def callback_task_feedback(self, feedback_msg, task_id, robot_id):
         feedback = feedback_msg.feedback
@@ -134,6 +254,7 @@ class FleetManager(Node):
     def callback_task_result(self, future, task_id, robot_id):
 
         result = future.result().result
+        self.release_zones(robot_id, self.task_registry[task_id].get("zones", []))
 
         if result.success:
 
@@ -164,26 +285,44 @@ class FleetManager(Node):
             response.success = False
             response.message = f"{request.task_id} already exists"
             self.get_logger().warn(response.message)
+            return response
+
+        self.task_registry[request.task_id] = {
+            "source": request.source,
+            "destination": request.destination,
+            "priority": request.priority,
+            "status": "PENDING",
+            "assigned_robot": None,
+        }
+
+        result = self.try_assign(request.task_id)
+        if result == ASSIGN_INVALID:
+            response.success = False
+            response.message = (
+                f"{request.task_id}: unknown destination '{request.destination}'"
+            )
+            del self.task_registry[request.task_id]
+        elif result == ASSIGN_RETRY:
+            self.pending_tasks.append(request.task_id)
+            response.success = True
+            response.message = (
+                f"{request.task_id} created and queued "
+                "(waiting for a free robot or lane)"
+            )
         else:
-            self.task_registry[request.task_id] = {
-                "source": request.source,
-                "destination": request.destination,
-                "priority": request.priority,
-                "status": "PENDING",
-                "assigned_robot": None,
-            }
-
-            robot_id = self.assign_task(request.task_id)
-            if robot_id is not None:
-                response.success = True
-                response.message = f"{request.task_id} assigned to {robot_id} "
-
-            else:
-                response.success = True
-                response.message = (
-                    f"{request.task_id} created but no robot is available"
-                )
+            response.success = True
+            response.message = f"{request.task_id} assigned to {result} "
         return response
+
+    def process_pending_tasks(self):
+        still_pending = []
+        for task_id in self.pending_tasks:
+            result = self.try_assign(task_id)
+            if result == ASSIGN_RETRY:
+                still_pending.append(task_id)
+            elif result == ASSIGN_INVALID:
+                self.task_registry[task_id]["status"] = "FAILED"
+        self.pending_tasks = still_pending
 
     def publish_status(self):
         self.get_logger().info("Publishing message: Fleet manager is available")
