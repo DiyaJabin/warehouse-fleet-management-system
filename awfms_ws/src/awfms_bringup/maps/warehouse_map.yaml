@@ -1,7 +1,9 @@
 image: warehouse_map.pgm
 mode: trinary
 resolution: 0.050
-origin: [-10.594, -6.902, 0]
+# x shifted +0.525 m from the SLAM output so the map frame matches the Gazebo world
+# frame (inner wall faces at x=+-9.775); stray SLAM ghost pixels on open floor removed.
+origin: [-10.069, -6.902, 0]
 negate: 0
 occupied_thresh: 0.65
 free_thresh: 0.196

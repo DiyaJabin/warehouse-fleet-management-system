@@ -10,17 +10,21 @@
         <link name="base_link">
 
             <visual name="base_visual">
+                <!-- 0.4 m tall (0.1-0.5 m above floor) so other robots' LiDAR scan plane
+                     (0.35 m) hits this chassis; at 0.2 m robots were invisible to each other -->
+                <pose>0 0 0.1 0 0 0</pose>
                 <geometry>
                     <box>
-                        <size>0.8 0.6 0.2</size>
+                        <size>0.8 0.6 0.4</size>
                     </box>
                 </geometry>
             </visual>
 
             <collision name="base_collision">
+                <pose>0 0 0.1 0 0 0</pose>
                 <geometry>
                     <box>
-                        <size>0.8 0.6 0.2</size>
+                        <size>0.8 0.6 0.4</size>
                     </box>
                 </geometry>
             </collision>
