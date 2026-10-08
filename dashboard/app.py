@@ -109,20 +109,20 @@ with st.sidebar:
 # ---------------------------------------------------------------- map
 def warehouse_map(robots, zones):
     dark = getattr(st.context, "theme", None) is not None and st.context.theme.type == "dark"
-    ink, muted = ("#ffffff", "#c3c2b7") if dark else ("#0b0b0b", "#52514e")
+    ink, muted = ("#ffffff", "#c3c2b7") if dark else ("#16324f", "#4a6585")
     shelves = pd.DataFrame([{"x1": x - 1.05, "x2": x + 1.05, "y1": y - 0.5, "y2": y + 0.5} for x, y in SHELVES])
     base = alt.Chart().properties(height=420)
     x_scale = alt.Scale(domain=[-10, 10], nice=False)
     y_scale = alt.Scale(domain=[-7, 7], nice=False)
     walls = alt.Chart(pd.DataFrame([{"x1": -9.9, "x2": 9.9, "y1": -6.8, "y2": 6.8}])).mark_rect(
-        fill="transparent", stroke="#8a8984", strokeWidth=2
+        fill="transparent", stroke="#8fa9c8", strokeWidth=2
     ).encode(x=alt.X("x1:Q", scale=x_scale, title=None), x2="x2", y=alt.Y("y1:Q", scale=y_scale, title=None), y2="y2")
-    shelf_layer = alt.Chart(shelves).mark_rect(fill="#b5b3ad", cornerRadius=2).encode(
+    shelf_layer = alt.Chart(shelves).mark_rect(fill="#b4c6dc", cornerRadius=2).encode(
         x=alt.X("x1:Q", scale=x_scale), x2="x2", y=alt.Y("y1:Q", scale=y_scale), y2="y2"
     )
     z = zones.copy()
     z["state"] = z.owner.apply(lambda o: f"reserved by {o}" if o else "free")
-    z["fill"] = z.owner.apply(lambda o: ROBOT_COLORS.get(o, "#d03b3b") if o else "#c9c8c2")
+    z["fill"] = z.owner.apply(lambda o: ROBOT_COLORS.get(o, "#d03b3b") if o else "#c4d8f0")
     # Altair sizes points by area in px^2: convert zone radius (m) to pixels.
     px_per_m = 420 / 14
     z["size"] = (2 * z.radius * px_per_m) ** 2
@@ -170,19 +170,19 @@ def live():
     busy = robots.status.isin(["MOVING", "BUSY"]).sum()
     counts = tasks.status.value_counts()
     cols = st.columns(7)
-    cols[0].metric("Robots online", f"{online}/{len(robots)}")
-    cols[1].metric("Idle", int((robots.status == "IDLE").sum()))
-    cols[2].metric("Busy", int(busy))
-    cols[3].metric("Active tasks", int(counts.reindex(ACTIVE_STATES).fillna(0).sum()))
-    cols[4].metric("Pending", int(counts.get("PENDING", 0)))
-    cols[5].metric("Completed", int(counts.get("COMPLETED", 0)))
-    cols[6].metric("Failed", int(counts.get("FAILED", 0)))
+    cols[0].metric("Robots online", f"{online}/{len(robots)}", border=True)
+    cols[1].metric("Idle", int((robots.status == "IDLE").sum()), border=True)
+    cols[2].metric("Busy", int(busy), border=True)
+    cols[3].metric("Active tasks", int(counts.reindex(ACTIVE_STATES).fillna(0).sum()), border=True)
+    cols[4].metric("Pending", int(counts.get("PENDING", 0)), border=True)
+    cols[5].metric("Completed", int(counts.get("COMPLETED", 0)), border=True)
+    cols[6].metric("Failed", int(counts.get("FAILED", 0)), border=True)
 
     left, right = st.columns([3, 2])
     with left:
         st.subheader("Warehouse map")
         st.altair_chart(warehouse_map(robots, zones), width="stretch")
-        st.caption("Circles are shared corridor zones (grey = free, robot colour = reserved). Squares are named locations.")
+        st.caption("Circles are shared corridor zones (pale blue = free, robot colour = reserved). Squares are named locations.")
     with right:
         st.subheader("Zone reservations")
         for z in zones.itertuples():
@@ -208,22 +208,37 @@ def live():
         st.info("No tasks in this run yet — create one from the sidebar or run `ros2 run awfms_fleet_manager demo_tasks normal`.")
     else:
         wait = (tasks.assigned_at.fillna(time.time()) - tasks.created_at).where(tasks.status != "FAILED", None)
+        # Display-only shortening: the column headers already say "Waiting for" and all zones are corridor zones.
         st.dataframe(pd.DataFrame({
             "Task": tasks.task_id,
             "Route": tasks.source + " → " + tasks.destination,
             "Priority": tasks.priority,
             "Status": tasks.status.map(lambda s: STATUS_ICON.get(s, s)),
             "Robot": tasks.assigned_robot.fillna("—"),
-            "Waiting for": tasks.wait_reason.fillna(""),
+            "Waiting for": tasks.wait_reason.fillna("").str.replace(r"^waiting for ", "", regex=True).replace("", "—"),
             "Progress": tasks.progress.fillna(0.0),
-            "Zones": tasks.zones.map(lambda z: ", ".join(json.loads(z)) if z else "") .replace("", "—"),
+            "Zones": tasks.zones.map(lambda z: " · ".join(n.removeprefix("corridor_") for n in json.loads(z)) if z else "")
+                                .replace("", "—"),
             "Created": tasks.created_at.map(clock),
             "Assigned": tasks.assigned_at.map(clock),
             "Finished": tasks.finished_at.map(clock),
-            "Queue wait (s)": wait.round(1),
+            "Wait (s)": wait.round(1),
             "Message": tasks.message.fillna(""),
-        }), hide_index=True, width="stretch",
-            column_config={"Progress": st.column_config.ProgressColumn("Progress", min_value=0, max_value=100, format="%.0f%%")})
+        }), hide_index=True, width="stretch", row_height=32, column_config={
+            "Task": st.column_config.TextColumn(width="medium", pinned=True),
+            "Route": st.column_config.TextColumn(width="medium"),
+            "Priority": st.column_config.NumberColumn("Prio", width="small", help="Task priority (higher first)"),
+            "Status": st.column_config.TextColumn(width="medium"),
+            "Robot": st.column_config.TextColumn(width="small"),
+            "Waiting for": st.column_config.TextColumn(width="medium", help="Why a PENDING task has not been dispatched"),
+            "Progress": st.column_config.ProgressColumn("Progress", min_value=0, max_value=100, format="%.0f%%", width="small"),
+            "Zones": st.column_config.TextColumn(width="medium", help="Corridor zones reserved for the task (west · center · east)"),
+            "Created": st.column_config.TextColumn(width="small"),
+            "Assigned": st.column_config.TextColumn(width="small"),
+            "Finished": st.column_config.TextColumn(width="small"),
+            "Wait (s)": st.column_config.NumberColumn(width="small", help="Queue wait from creation to assignment"),
+            "Message": st.column_config.TextColumn(width="large"),
+        })
 
     c1, c2 = st.columns(2)
     with c1:

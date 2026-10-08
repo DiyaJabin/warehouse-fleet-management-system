@@ -1,5 +1,25 @@
 [theme]
-primaryColor = "#2a78d6"
+# Light blue engineering theme. base = "light" keeps the dashboard bright even
+# when the viewer's OS is in dark mode.
+base = "light"
+primaryColor = "#1f6fd1"
+backgroundColor = "#f7fbff"
+secondaryBackgroundColor = "#eaf2fc"
+textColor = "#16324f"
+linkColor = "#1f6fd1"
+borderColor = "#d3e2f4"
+showWidgetBorder = true
+baseRadius = "0.5rem"
+headingFontWeights = [700, 600, 600, 600, 600, 600]
+metricValueFontSize = "2rem"
+dataframeBorderColor = "#dbe7f5"
+dataframeHeaderBackgroundColor = "#e6f0fc"
+dataframeHeaderTextColor = "#1b4f8c"
+
+[theme.sidebar]
+backgroundColor = "#e9f2fd"
+secondaryBackgroundColor = "#ffffff"
+borderColor = "#c9dcf3"
 
 [browser]
 gatherUsageStats = false
