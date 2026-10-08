@@ -251,8 +251,8 @@ When the Fleet Manager restarts, it clears the live tables, marks tasks left unf
 
 ## 10. Dashboard and analytics
 
-![Dashboard during zone contention](docs/images/dashboard_zone_contention.png)
-*Live dashboard during the contention scenario: robot_3 holds all three corridor zones while it drives past the parked robot_1. The opposite-direction task stays `PENDING` until the zones are released.*
+![AWFMS fleet dashboard overview](docs/images/dashboard_overview.png)
+*Live dashboard during the contention scenario: robot_3 holds all three corridor zones on its pickup → dropoff run, so the opposite-direction task stays `PENDING` until the zones are released.*
 
 `dashboard/app.py` auto-refreshes every second and shows:
 

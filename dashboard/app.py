@@ -169,7 +169,8 @@ def live():
     online = (robots.status != "OFFLINE").sum()
     busy = robots.status.isin(["MOVING", "BUSY"]).sum()
     counts = tasks.status.value_counts()
-    cols = st.columns(7)
+    # Card widths follow label length so labels like "Robots online" are not truncated.
+    cols = st.columns([1.45, 0.85, 0.85, 1.35, 1.1, 1.3, 0.9])
     cols[0].metric("Robots online", f"{online}/{len(robots)}", border=True)
     cols[1].metric("Idle", int((robots.status == "IDLE").sum()), border=True)
     cols[2].metric("Busy", int(busy), border=True)
