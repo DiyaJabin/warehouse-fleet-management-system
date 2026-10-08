@@ -3,7 +3,7 @@
 <package format="3">
   <name>awfms_fleet_manager</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Centralized fleet manager, robot nodes and SQLite logging for the AWFMS warehouse fleet</description>
   <maintainer email="diyasjabin@gmail.com">diya</maintainer>
   <license>TODO: License declaration</license>
 
@@ -11,6 +11,8 @@
   <depend>example_interfaces</depend>
   <depend>action_msgs</depend>
   <depend>nav2_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>awfms_interfaces</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

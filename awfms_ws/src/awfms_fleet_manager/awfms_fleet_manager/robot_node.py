@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import math
 import time
 import rclpy
 from rclpy.node import Node
@@ -11,6 +12,7 @@ from rclpy.callback_groups import (
 )  # Allow callbacks in this group to run concurrently,including while another callback from the same group is still executing
 from action_msgs.msg import GoalStatus
 from nav2_msgs.action import NavigateToPose
+from tf2_ros import Buffer, TransformListener
 from awfms_interfaces.msg import RobotStatus
 from awfms_interfaces.srv import RegisterRobot
 from awfms_interfaces.action import AssignTask
@@ -30,6 +32,10 @@ class Robot(Node):
         )  # Allow callbacks assigned to this group to run concurrently (needed because tha action callback blocks while navigation runs, which would otherwise block the robot's status timer)
 
         self.status = "IDLE"
+        # Map-frame pose (from AMCL's map->odom TF) is sent with every heartbeat
+        # so the fleet manager can plan zones from where the robot actually is.
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
         self.status_publisher_ = self.create_publisher(RobotStatus, "/robot/status", 10)
         self.timer_ = self.create_timer(
             0.5, self.publish_status, self.callback_group
@@ -51,10 +57,20 @@ class Robot(Node):
         )
         self.get_logger().info("Robot Node has been started")
 
+    def current_pose(self):
+        try:
+            tf = self.tf_buffer.lookup_transform(
+                "map", f"{self.robot_id}/base_link", rclpy.time.Time()
+            )  # latest available transform
+            return tf.transform.translation.x, tf.transform.translation.y
+        except Exception:  # not localized yet
+            return math.nan, math.nan
+
     def publish_status(self):
         message = RobotStatus()
         message.robot_id = self.robot_id
         message.status = self.status
+        message.x, message.y = self.current_pose()
         self.status_publisher_.publish(message)
 
     def register_robot(self):
@@ -82,21 +98,13 @@ class Robot(Node):
     def execute_assign_task(
         self, goal_handle
     ):  # goal_handle is the ROS2 handle for currently running action
-        task_id = goal_handle.request.task_id
-        source = goal_handle.request.source
-        destination = goal_handle.request.destination
-        dest_x = goal_handle.request.dest_x
-        dest_y = goal_handle.request.dest_y
-
+        req = goal_handle.request
+        task_id = req.task_id
         self.get_logger().info(
-            f"Received task {task_id}: {source}->{destination} ({dest_x:.2f}, {dest_y:.2f})"
+            f"Received task {task_id}: {req.source} ({req.source_x:.2f}, {req.source_y:.2f})"
+            f" -> {req.destination} ({req.dest_x:.2f}, {req.dest_y:.2f})"
         )
         self.status = "MOVING"
-        feedback_msg = AssignTask.Feedback()
-        feedback_msg.status = "MOVING"
-        feedback_msg.progress = 0.0
-        goal_handle.publish_feedback(feedback_msg)
-
         result = AssignTask.Result()
 
         if not self.nav_client_.wait_for_server(timeout_sec=5.0):
@@ -106,13 +114,38 @@ class Robot(Node):
             result.message = f"Task {task_id} failed: navigate_to_pose action server unavailable"
             return result
 
+        # A transport task has two navigation legs: drive to the source to pick
+        # up, then to the destination to deliver. Each leg is half the progress.
+        legs = [
+            ("TO_SOURCE", req.source_x, req.source_y, 0.0),
+            ("TO_DESTINATION", req.dest_x, req.dest_y, 50.0),
+        ]
+        for phase, x, y, base in legs:
+            goal_handle.publish_feedback(AssignTask.Feedback(status=phase, progress=base))
+            ok, detail = self.navigate(goal_handle, phase, x, y, base)
+            if not ok:
+                self.status = "IDLE"
+                goal_handle.abort()
+                result.success = False
+                result.message = f"Task {task_id} failed during {phase}: {detail}"
+                return result
+
+        self.status = "IDLE"
+        goal_handle.publish_feedback(AssignTask.Feedback(status="TO_DESTINATION", progress=100.0))
+        goal_handle.succeed()
+        result.success = True
+        result.message = f"Task {task_id} completed successfully"
+        return result
+
+    def navigate(self, goal_handle, phase, x, y, base):
+        """Drive one leg with Nav2. Returns (success, detail)."""
         nav_goal = NavigateToPose.Goal()
         nav_goal.pose.header.frame_id = "map"
-        nav_goal.pose.pose.position.x = dest_x
-        nav_goal.pose.pose.position.y = dest_y
+        nav_goal.pose.pose.position.x = x
+        nav_goal.pose.pose.position.y = y
         nav_goal.pose.pose.orientation.w = 1.0
 
-        progress_state = {"initial_distance": None, "progress": 0.0}
+        progress_state = {"initial_distance": None}
 
         def nav_feedback_cb(feedback):
             remaining = feedback.feedback.distance_remaining
@@ -120,12 +153,10 @@ class Robot(Node):
                 progress_state["initial_distance"] = remaining
             initial = progress_state["initial_distance"]
             if initial:
-                progress_state["progress"] = max(
-                    0.0, min(100.0, 100.0 * (1.0 - remaining / initial))
+                leg = max(0.0, min(1.0, 1.0 - remaining / initial))
+                goal_handle.publish_feedback(
+                    AssignTask.Feedback(status=phase, progress=base + 50.0 * leg)
                 )
-            goal_handle.publish_feedback(
-                AssignTask.Feedback(status="MOVING", progress=progress_state["progress"])
-            )
 
         send_future = self.nav_client_.send_goal_async(
             nav_goal, feedback_callback=nav_feedback_cb
@@ -133,34 +164,17 @@ class Robot(Node):
         while not send_future.done():
             time.sleep(0.1)
         nav_goal_handle = send_future.result()
-
         if not nav_goal_handle.accepted:
-            self.status = "IDLE"
-            goal_handle.abort()
-            result.success = False
-            result.message = f"Task {task_id} failed: navigation goal rejected"
-            return result
+            return False, "navigation goal rejected"
 
         result_future = nav_goal_handle.get_result_async()
         while not result_future.done():
             time.sleep(0.2)
 
         nav_status = result_future.result().status
-        self.status = "IDLE"
-
-        if nav_status == GoalStatus.STATUS_SUCCEEDED:
-            feedback_msg.status = "MOVING"
-            feedback_msg.progress = 100.0
-            goal_handle.publish_feedback(feedback_msg)
-            goal_handle.succeed()
-            result.success = True
-            result.message = f"Task {task_id} completed successfully"
-        else:
-            goal_handle.abort()
-            result.success = False
-            result.message = f"Task {task_id} failed: navigation did not succeed (status={nav_status})"
-
-        return result
+        if nav_status != GoalStatus.STATUS_SUCCEEDED:
+            return False, f"navigation did not succeed (status={nav_status})"
+        return True, ""
 
 
 def main(args=None):

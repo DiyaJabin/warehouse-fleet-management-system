@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='diya',
     maintainer_email='diyasjabin@gmail.com',
-    description='TODO: Package description',
+    description='Centralized fleet manager, robot nodes and SQLite logging for the AWFMS warehouse fleet',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'fleet_manager = awfms_fleet_manager.fleet_manager:main',
             'robot_node = awfms_fleet_manager.robot_node:main',
+            'demo_tasks = awfms_fleet_manager.demo_tasks:main',
         ],
     },
 )

@@ -1,0 +1,9 @@
+<launch>
+    <!-- Full demo stack: Gazebo world + robots + bridge + fleet manager + robot nodes,
+         and a Nav2 stack per robot on the saved warehouse map. -->
+    <arg name="gui" default="true"/>
+    <include file="$(find-pkg-share awfms_bringup)/launch/fleet.launch.xml">
+        <arg name="gui" value="$(var gui)"/>
+    </include>
+    <include file="$(find-pkg-share awfms_bringup)/launch/navigation.launch.xml"/>
+</launch>
